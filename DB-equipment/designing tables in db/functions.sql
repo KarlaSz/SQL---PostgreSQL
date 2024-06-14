@@ -135,3 +135,62 @@ JOIN varranty v ON p.product_id = v.product_id
 JOIN LATERAL get_max_varranty(v.start_date, v.end_date) f ON true;
 
 
+--III
+--zwracanie wynikow funkcji
+--produkt oznacza tutaj typ, a nie o sama tabele , czyli pasujacy rekord 
+--do stuktury tabeli produkt zostnaie zwrocony
+
+CREATE OR REPLACE FUNCTION last_product()
+RETURNS product AS
+$$
+	SELECT * FROM product ORDER BY product_id DESC LIMIT 1
+$$ LANGUAGE SQL
+
+--
+SELECT last_product();
+
+--zapytanie do tego co ta funkcja zwraca
+SELECT * FROM last_product();
+SELECT name FROM last_product(); --najlepszy
+SELECT (last_product()).name;
+SELECT (last_product()).*; 
+SELECT name(last_product());
+
+DROP FUNCTION last_product
+
+--zwracanie wiecej niz jednej wartosci, SETOF - zbior elementow tak a do takieog typu
+CREATE OR REPLACE FUNCTION last_product()
+RETURNS SETOF product AS
+$$
+	SELECT * FROM product ORDER BY product_id DESC LIMIT 2
+$$ LANGUAGE SQL
+
+SELECT * FROM last_product();
+
+--
+--wartosci jakie zwracamy zdefiniowane sa jako parametry
+CREATE OR REPLACE FUNCTION owner_and_product_count
+	(OUT p_owner_name TEXT, OUT p_product_count INT)
+RETURNS SETOF record AS
+$$
+	SELECT o.first_name ||' '|| o.last_name, count(*)
+	FROM owner AS o
+	JOIN owner_product AS op ON op.owner_id = o.owner_id
+	GROUP by o.owner_id
+$$ LANGUAGE SQL
+
+SELECT * FROM owner_and_product_count();
+
+
+--to zwracamy bedzie tabela i bedzie zawierac dwie kolumny
+CREATE OR REPLACE FUNCTION owner_and_product_count_table()
+RETURNS TABLE(full_name TEXT, prod_count INT) AS
+$$
+	SELECT o.first_name ||' '|| o.last_name, count(*)
+	FROM owner AS o
+	JOIN owner_product AS op ON op.owner_id = o.owner_id
+	GROUP by o.owner_id
+$$ LANGUAGE SQL
+
+
+SELECT * FROM owner_and_product_count_table();
